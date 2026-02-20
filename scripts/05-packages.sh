@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # 05-packages.sh — Install packages from list files
 
+# Enable multilib repo (needed for steam, lib32-* packages)
+log "Enabling multilib repository..."
+sed -i '/^#\[multilib\]/{s/^#//;n;s/^#//}' /mnt/etc/pacman.conf
+arch-chroot /mnt pacman -Sy --noconfirm
+
 log "Reading package lists..."
 
 PACKAGES=()

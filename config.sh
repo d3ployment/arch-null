@@ -4,7 +4,7 @@
 
 # Target disk (e.g., /dev/nvme0n1, /dev/sda)
 # WARNING: This disk will be COMPLETELY ERASED
-DISK="/dev/nvme0n1"
+DISK="/dev/vda"
 
 # Partition layout (auto-derived from DISK)
 # For NVMe: /dev/nvme0n1p1, /dev/nvme0n1p2
@@ -21,9 +21,9 @@ fi
 CRYPT_NAME="cryptroot"
 
 # System
-HOSTNAME="null"
-USERNAME="user"
-TIMEZONE="America/New_York"
+HOSTNAME="arch-null"
+USERNAME="d3ployment"
+TIMEZONE="Europe/Paris"
 LOCALE="en_US.UTF-8"
 KEYMAP="us"
 
@@ -48,8 +48,8 @@ EFI_MOUNT="/mnt/boot"
 # Package list directory (relative to script location)
 PKG_DIR="packages"
 
-# Network — static IP via systemd-networkd
-NET_IFACE="enp6s0"           # Find yours with: ip link
-NET_ADDRESS="192.168.1.100/24"
-NET_GATEWAY="192.168.1.1"
-NET_DNS="1.1.1.1 9.9.9.9"
+# Network - static IP via systemd-networkd
+NET_IFACE="ens3"
+NET_ADDRESS="10.0.2.15/24"
+NET_GATEWAY="10.0.2.1"
+NET_DNS="time.cloudflare.com"

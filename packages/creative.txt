@@ -12,4 +12,3 @@ ardour
 audacity
 kdenlive
 ffmpeg
-imagemagic
