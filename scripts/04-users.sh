@@ -7,7 +7,7 @@ arch-chroot /mnt /bin/bash <<CHROOT
 set -euo pipefail
 
 # Create user with home directory
-useradd -m -G wheel,render -s /usr/bin/zsh "${USERNAME}"
+useradd -m -G wheel,render -s /bin/bash "${USERNAME}"
 
 # Sudo: allow wheel group
 mkdir -p /etc/sudoers.d

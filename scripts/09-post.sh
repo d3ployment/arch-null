@@ -8,23 +8,11 @@ sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 10/' /mnt/etc/pacman.conf
 sed -i 's/^#Color/Color/' /mnt/etc/pacman.conf
 sed -i '/^Color/a ILoveCandy' /mnt/etc/pacman.conf
 
-# Snapper configuration for root
-arch-chroot /mnt /bin/bash <<CHROOT
-set -euo pipefail
-
-# Create snapper config for root
-snapper -c root create-config /
-
-# Snapper: keep 5 hourly, 7 daily, 4 weekly snapshots
-snapper -c root set-config \
-    TIMELINE_MIN_AGE="1800" \
-    TIMELINE_LIMIT_HOURLY="5" \
-    TIMELINE_LIMIT_DAILY="7" \
-    TIMELINE_LIMIT_WEEKLY="4" \
-    TIMELINE_LIMIT_MONTHLY="0" \
-    TIMELINE_LIMIT_YEARLY="0"
-
-CHROOT
+# Snapper config — write directly instead of using snapper CLI (needs D-Bus)
+mkdir -p /mnt/.snapshots
+cp "${SCRIPT_DIR}/system/snapper/root-config" /mnt/etc/snapper/configs/root
+# Register the config with snapper
+sed -i 's/^SNAPPER_CONFIGS=""/SNAPPER_CONFIGS="root"/' /mnt/etc/conf.d/snapper
 
 # AMDGPU environment variables
 mkdir -p /mnt/etc/profile.d

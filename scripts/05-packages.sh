@@ -38,4 +38,8 @@ rm -rf /tmp/paru-bin
 
 CHROOT
 
+# Set user shell to zsh
+log "Setting ${USERNAME} shell to zsh..."
+arch-chroot /mnt chsh -s /usr/bin/zsh "${USERNAME}"
+
 log "Package installation complete."
