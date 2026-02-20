@@ -1,0 +1,15 @@
+base
+linux-zen
+linux-zen-headers
+linux-firmware
+amd-ucode
+btrfs-progs
+cryptsetup
+dosfstools
+e2fsprogs
+sudo
+vim
+git
+base-devel
+man-db
+man-pages

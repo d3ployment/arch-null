@@ -1,0 +1,40 @@
+* {
+    font-family: monospace;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(30, 30, 46, 0.9);
+    color: #cdd6f4;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    color: #6c7086;
+    border: none;
+    border-radius: 0;
+}
+
+#workspaces button.active {
+    color: #cdd6f4;
+    background: rgba(137, 180, 250, 0.2);
+}
+
+#clock,
+#cpu,
+#memory,
+#temperature,
+#pulseaudio,
+#network,
+#tray {
+    padding: 0 10px;
+}
+
+#temperature.critical {
+    color: #f38ba8;
+}
+
+#pulseaudio.muted {
+    color: #6c7086;
+}

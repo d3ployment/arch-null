@@ -1,0 +1,8 @@
+systemd
+sbctl
+tpm2-tss
+libfido2
+snapper
+snap-pac
+smartmontools
+btop

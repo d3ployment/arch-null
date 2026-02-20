@@ -1,0 +1,11 @@
+font=monospace 11
+background-color=#1e1e2eee
+text-color=#cdd6f4
+border-color=#89b4fa
+border-size=2
+border-radius=8
+padding=12
+margin=8
+default-timeout=5000
+max-visible=3
+layer=overlay

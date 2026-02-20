@@ -1,0 +1,15 @@
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+obs-studio
+gimp
+inkscape
+blender
+krita
+ardour
+audacity
+kdenlive
+ffmpeg
+imagemagic
