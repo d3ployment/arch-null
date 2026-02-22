@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # 08-dotfiles.sh — Deploy dotfiles to user home
 
-USER_HOME="/mnt/home/${USERNAME}"
+if $LIVE_ISO; then
+    USER_HOME="${TARGET}/home/${USERNAME}"
+else
+    USER_HOME="$(eval echo "~${USERNAME}")"
+fi
 CONFIG_DIR="${USER_HOME}/.config"
 
 log "Deploying dotfiles for ${USERNAME}..."
@@ -30,16 +34,18 @@ for src_dir in "${!DOTFILE_MAP[@]}"; do
 done
 
 # Zsh files go to home directory
-if [[ -f "${SCRIPT_DIR}/../dotfiles/zsh/.zshrc" ]]; then
-    cp "${SCRIPT_DIR}/../dotfiles/zsh/.zshrc" "${USER_HOME}/.zshrc"
-    log "  zsh/.zshrc -> ~/.zshrc"
-fi
-if [[ -f "${SCRIPT_DIR}/../dotfiles/zsh/.zprofile" ]]; then
-    cp "${SCRIPT_DIR}/../dotfiles/zsh/.zprofile" "${USER_HOME}/.zprofile"
-    log "  zsh/.zprofile -> ~/.zprofile"
-fi
+for f in .zshrc .zprofile; do
+    if [[ -f "${SCRIPT_DIR}/../dotfiles/zsh/${f}" ]]; then
+        cp "${SCRIPT_DIR}/../dotfiles/zsh/${f}" "${USER_HOME}/${f}"
+        log "  zsh/${f} -> ~/${f}"
+    fi
+done
 
 # Fix ownership
-arch-chroot /mnt chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}"
+if $LIVE_ISO; then
+    arch-chroot /mnt chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}"
+else
+    chown -R "${USERNAME}:${USERNAME}" "${USER_HOME}"
+fi
 
 log "Dotfiles deployed."

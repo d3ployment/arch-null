@@ -3,20 +3,46 @@
 
 log "Applying final configuration..."
 
-# Pacman config: parallel downloads, color, candy
-sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 10/' /mnt/etc/pacman.conf
-sed -i 's/^#Color/Color/' /mnt/etc/pacman.conf
-sed -i '/^Color/a ILoveCandy' /mnt/etc/pacman.conf
+PACMAN_CONF="${TARGET}/etc/pacman.conf"
 
-# Snapper config — write directly instead of using snapper CLI (needs D-Bus)
-mkdir -p /mnt/.snapshots
-cp "${SCRIPT_DIR}/system/snapper/root-config" /mnt/etc/snapper/configs/root
-# Register the config with snapper
-sed -i 's/^SNAPPER_CONFIGS=""/SNAPPER_CONFIGS="root"/' /mnt/etc/conf.d/snapper
+# Pacman config: parallel downloads
+if grep -q '^#ParallelDownloads' "${PACMAN_CONF}"; then
+    sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 10/' "${PACMAN_CONF}"
+fi
+
+# Pacman config: color
+if grep -q '^#Color' "${PACMAN_CONF}"; then
+    sed -i 's/^#Color/Color/' "${PACMAN_CONF}"
+fi
+
+# Pacman config: ILoveCandy (only add once)
+if ! grep -q '^ILoveCandy' "${PACMAN_CONF}"; then
+    sed -i '/^Color/a ILoveCandy' "${PACMAN_CONF}"
+fi
+
+# Snapper config — write directly (no D-Bus needed)
+mkdir -p "${TARGET}/.snapshots"
+mkdir -p "${TARGET}/etc/snapper/configs"
+cp "${SCRIPT_DIR}/../system/snapper/root-config" "${TARGET}/etc/snapper/configs/root"
+if grep -q '^SNAPPER_CONFIGS=""' "${TARGET}/etc/conf.d/snapper" 2>/dev/null; then
+    sed -i 's/^SNAPPER_CONFIGS=""/SNAPPER_CONFIGS="root"/' "${TARGET}/etc/conf.d/snapper"
+fi
+
+# Network config
+mkdir -p "${TARGET}/etc/systemd/network"
+cat > "${TARGET}/etc/systemd/network/20-wired.network" <<EOF
+[Match]
+Name=${NET_IFACE}
+
+[Network]
+Address=${NET_ADDRESS}
+Gateway=${NET_GATEWAY}
+DNS=${NET_DNS}
+EOF
 
 # AMDGPU environment variables
-mkdir -p /mnt/etc/profile.d
-cat > /mnt/etc/profile.d/amdgpu.sh <<'EOF'
+mkdir -p "${TARGET}/etc/profile.d"
+cat > "${TARGET}/etc/profile.d/amdgpu.sh" <<'EOF'
 # AMDGPU: enable Vulkan (RADV), VA-API
 export AMD_VULKAN_ICD=RADV
 export LIBVA_DRIVER_NAME=radeonsi
@@ -29,9 +55,9 @@ export CLUTTER_BACKEND=wayland
 export XDG_SESSION_TYPE=wayland
 EOF
 
-# Pacman hook: snapshot before/after upgrades
-mkdir -p /mnt/etc/pacman.d/hooks
-cat > /mnt/etc/pacman.d/hooks/50-snapper-pre.hook <<'EOF'
+# Pacman hooks for snapper snapshots
+mkdir -p "${TARGET}/etc/pacman.d/hooks"
+cat > "${TARGET}/etc/pacman.d/hooks/50-snapper-pre.hook" <<'EOF'
 [Trigger]
 Operation = Upgrade
 Operation = Install
@@ -45,7 +71,7 @@ When = PreTransaction
 Exec = /usr/bin/snapper -c root create -d "pacman pre" -t pre
 EOF
 
-cat > /mnt/etc/pacman.d/hooks/51-snapper-post.hook <<'EOF'
+cat > "${TARGET}/etc/pacman.d/hooks/51-snapper-post.hook" <<'EOF'
 [Trigger]
 Operation = Upgrade
 Operation = Install

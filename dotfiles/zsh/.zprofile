@@ -17,7 +17,7 @@ export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 # Starship
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 
-# Start Hyprland on tty1
-if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-    exec Hyprland
+# Start Hyprland on tty1 via uwsm (systemd session manager)
+if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    exec uwsm start hyprland-uwsm.desktop
 fi

@@ -50,6 +50,6 @@ PKG_DIR="packages"
 
 # Network - static IP via systemd-networkd
 NET_IFACE="ens3"
-NET_ADDRESS="10.0.2.15/24"
-NET_GATEWAY="10.0.2.1"
+NET_ADDRESS="10.1.10.2/24"
+NET_GATEWAY="10.1.10.1"
 NET_DNS="time.cloudflare.com"

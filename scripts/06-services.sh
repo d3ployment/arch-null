@@ -3,26 +3,27 @@
 
 log "Enabling system services..."
 
-arch-chroot /mnt /bin/bash <<CHROOT
-set -euo pipefail
+SERVICES=(
+    systemd-networkd
+    systemd-resolved
+    systemd-timesyncd
+    bluetooth
+    fstrim.timer
+    snapper-timeline.timer
+    snapper-cleanup.timer
+)
 
-# Network (already enabled in 03-configure, but ensure)
-systemctl enable systemd-networkd
-systemctl enable systemd-resolved
-systemctl enable systemd-timesyncd
+for svc in "${SERVICES[@]}"; do
+    run_target "systemctl enable ${svc}" 2>/dev/null || true
+done
 
-# Bluetooth
-systemctl enable bluetooth
-
-# SSD TRIM
-systemctl enable fstrim.timer
-
-# Snapper automatic snapshots
-systemctl enable snapper-timeline.timer
-systemctl enable snapper-cleanup.timer
-
-# PipeWire runs as user service — auto-starts in a desktop session
-
-CHROOT
+# Auto-login on tty1
+log "Configuring auto-login on tty1..."
+mkdir -p "${TARGET}/etc/systemd/system/getty@tty1.service.d"
+cat > "${TARGET}/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin ${USERNAME} %I \$TERM
+EOF
 
 log "Services enabled."

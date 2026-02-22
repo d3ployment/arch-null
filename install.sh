@@ -2,14 +2,12 @@
 set -euo pipefail
 
 # arch-null installer
-# Run from the Arch Linux live ISO
-#   --dry-run   Print what each step would do without executing anything
+# Run from the Arch Linux live ISO or from an installed system
+#
+# From live ISO:  full install (partition, base, configure, packages, dotfiles)
+# From installed: sync packages, dotfiles, services, system config
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DRY_RUN=false
-if [[ "${1:-}" == "--dry-run" ]]; then
-    DRY_RUN=true
-fi
 
 # Colors
 RED='\033[0;31m'
@@ -27,6 +25,24 @@ step() { echo -e "\n${BLUE}${BOLD}==> $*${NC}"; }
 # Source configuration
 source "${SCRIPT_DIR}/config.sh"
 
+# Detect environment
+if [[ -d /run/archiso ]]; then
+    LIVE_ISO=true
+    TARGET="/mnt"
+else
+    LIVE_ISO=false
+    TARGET=""
+fi
+
+# Run a command in the target system
+run_target() {
+    if $LIVE_ISO; then
+        arch-chroot /mnt /bin/bash -c "$*"
+    else
+        /bin/bash -c "$*"
+    fi
+}
+
 # Display configuration summary
 echo -e "${BOLD}"
 echo "  ╔══════════════════════════════════════╗"
@@ -35,23 +51,27 @@ echo "  ║          /arch/null                   ║"
 echo "  ╚══════════════════════════════════════╝"
 echo -e "${NC}"
 
-if $DRY_RUN; then
-    echo -e "${YELLOW}[DRY RUN]${NC} No changes will be made."
-    echo ""
+if $LIVE_ISO; then
+    echo -e "${YELLOW}[LIVE ISO]${NC} Full install mode."
+else
+    echo -e "${YELLOW}[INSTALLED]${NC} Sync mode — updating config, packages, dotfiles."
 fi
+echo ""
 
 echo -e "${BOLD}Configuration:${NC}"
-echo "  Disk:       ${DISK}"
-echo "  EFI:        ${PART_EFI}"
-echo "  Root:       ${PART_ROOT} (LUKS2 + Btrfs)"
 echo "  Hostname:   ${HOSTNAME}"
 echo "  Username:   ${USERNAME}"
 echo "  Timezone:   ${TIMEZONE}"
 echo "  Kernel:     ${KERNEL}"
-echo "  Network:    ${NET_ADDRESS} via ${NET_GATEWAY} on ${NET_IFACE}"
+if $LIVE_ISO; then
+    echo "  Disk:       ${DISK}"
+    echo "  EFI:        ${PART_EFI}"
+    echo "  Root:       ${PART_ROOT} (LUKS2 + Btrfs)"
+    echo "  Network:    ${NET_ADDRESS} via ${NET_GATEWAY} on ${NET_IFACE}"
+fi
 echo ""
 
-if ! $DRY_RUN; then
+if $LIVE_ISO; then
     read -rp "$(echo -e "${YELLOW}This will ERASE ${DISK}. Continue? [y/N]:${NC} ")" confirm
     if [[ "${confirm}" != [yY] ]]; then
         err "Aborted."
@@ -59,31 +79,30 @@ if ! $DRY_RUN; then
     fi
 fi
 
-# Run install scripts in order (skip 07-yubikey, it's post-boot only)
+# Run numbered install scripts in order
 for script in "${SCRIPT_DIR}"/scripts/[0-9][0-9]-*.sh; do
     script_name="$(basename "${script}")"
-    [[ "${script_name}" == "07-yubikey.sh" ]] && continue
-    step "${script_name}"
-    if $DRY_RUN; then
-        log "(dry run) Would source ${script_name}"
-    else
-        source "${script}"
+
+    # On installed system, skip destructive scripts
+    if ! $LIVE_ISO; then
+        case "${script_name}" in
+            00-preflight.sh|01-partition.sh|02-base.sh|03-configure.sh) continue ;;
+        esac
     fi
+
+    step "${script_name}"
+    source "${script}"
 done
 
-if $DRY_RUN; then
+echo ""
+echo -e "${GREEN}${BOLD}Done.${NC}"
+if $LIVE_ISO; then
+    echo -e "Remove installation media and reboot."
+    echo -e "After first boot, run ${BLUE}scripts/yubikey.sh${NC} to enroll your Yubikey."
     echo ""
-    echo -e "${GREEN}${BOLD}Dry run complete.${NC} No changes were made."
-    exit 0
-fi
-
-echo ""
-echo -e "${GREEN}${BOLD}Installation complete.${NC}"
-echo -e "Remove installation media and reboot."
-echo -e "After first boot, run ${BLUE}07-yubikey.sh${NC} to enroll your Yubikey."
-echo ""
-read -rp "Reboot now? [y/N]: " reboot_confirm
-if [[ "${reboot_confirm}" == [yY] ]]; then
-    umount -R /mnt 2>/dev/null || true
-    reboot
+    read -rp "Reboot now? [y/N]: " reboot_confirm
+    if [[ "${reboot_confirm}" == [yY] ]]; then
+        umount -R /mnt 2>/dev/null || true
+        reboot
+    fi
 fi

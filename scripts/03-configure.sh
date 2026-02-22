@@ -2,24 +2,12 @@
 # 03-configure.sh — System configuration (chroot)
 
 log "Generating fstab..."
-genfstab -U /mnt >> /mnt/etc/fstab
+genfstab -U /mnt > /mnt/etc/fstab
 
 log "Configuring system in chroot..."
 
 # Copy system config files
 cp "${SCRIPT_DIR}/system/mkinitcpio.conf" /mnt/etc/mkinitcpio.conf
-
-# Configure systemd-networkd
-mkdir -p /mnt/etc/systemd/network
-cat > /mnt/etc/systemd/network/20-wired.network <<EOF
-[Match]
-Name=${NET_IFACE}
-
-[Network]
-Address=${NET_ADDRESS}
-Gateway=${NET_GATEWAY}
-DNS=${NET_DNS}
-EOF
 
 # Symlink stub-resolv.conf for systemd-resolved
 ln -sf /run/systemd/resolve/stub-resolv.conf /mnt/etc/resolv.conf
